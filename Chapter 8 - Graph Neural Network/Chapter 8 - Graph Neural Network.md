@@ -1,5 +1,8 @@
 # Chapter 8   Graph Neural Network
-#### 1.Introduction
+
+[toc]
+
+#### 1.GNN的背景与基本概念
 
 1. 问题的提出
 
@@ -29,7 +32,7 @@
 
 
 
-#### 2.Tasks, DataSet, BenchMark
+#### 2.GNN可以解决的问题类型已经相关DataSet和BenchMark
 
 <img src="./image-20200612181228591.png" alt="image-20200612181228591" style="zoom: 50%;" />
 
@@ -37,7 +40,7 @@
 
 
 
-#### 3.Spatial-based GNN
+#### 3.Spatial-based GNN（包括NN4G、DCNN、DGC、MoNET、GraphSage、GAT、GIN）
 
 1. Review
 
@@ -133,7 +136,7 @@
 
 
 
-#### 4.Graph Signal Processing and Spectral-based GNN
+#### 4.Graph Signal Processing（信号系统中的数学变换与GNN的关系） and Spectral-based GNN（谱图理论、ChabNet、GCN）
 
 1. Signal and System Review
 
@@ -269,7 +272,7 @@
 
      
 
-#### 5.Graph Generation
+#### 5.Graph Generation（VAE-based model、GAN-based model、Auto-regressive-based model概述）
 
 1. VAE-based model：Generate a whole graph in one step
 
@@ -289,7 +292,7 @@
    
    
 
-#### 6.GNN for NLP
+#### 6.GNN for NLP（概述）
 
 1. Semantic Roles Labeling
 2. Event Detection
