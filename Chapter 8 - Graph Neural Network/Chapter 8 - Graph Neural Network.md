@@ -1,10 +1,52 @@
 # Chapter 8   Graph Neural Network
 
-[toc]
+[1.Introduction](#1)
 
-#### 1.GNN的背景与基本概念
+​		[1.1 GNN提出的背景](#1.1)
 
-1. 问题的提出
+​		[1.2 GNN RoadMap](#1.2)
+
+[2.GNN可以解决的问题类型以及相关DataSet和BenchMark](#2)
+
+[3.Spatial-based GNN](#3)
+
+​		[3.1 CNN Review](#3.1)
+
+​		[3.2 NN4G（Neural Network for Graph）](#3.2)
+
+​		[3.3 DCNN（Diffusion Convolution Neural Network）](#3.3)
+
+​		[3.4 DGC（Diffusion Graph Convolution）](#3.4)
+
+​		[3.5 MoNET（Mixture Model Networks）](#3.5)
+
+​		[3.6 GraphSage（SAmple and aggreGatE）](#3.6)
+
+​		[3.7 GAT（Graph AttentinNeiworks）](#3.7)
+
+​		[3.8 GIN（Graph Isomorphism Network）](#3.8)
+
+[4.Graph Signal Processing and Spectral-based GNN](#4)
+
+​		[4.1 Signal and System Review（信号系统中的数学变换与GNN的关系）](#4.1)
+
+​		[4.2 Spectral Graph Theory（谱图理论）](#4.2)
+
+​		[4.3 ChebNet](#4.3)
+
+​		[4.4 GCN（Graph Convolution Network）](#4.4)
+
+[5 Graph Generation（VAE-based model、GAN-based model、Auto-regressive-based model概述）](#4.5)
+
+[6.GNN for NLP（概述）](#6)
+
+[7.Summary](#7)
+
+
+
+#### 1.Introduction<span name = "1"> </span>
+
+1. GNN提出的背景<span name = "1.1"> </span>
 
    - Graph由Node和Edge组成，其中Node和Edge均具有不同的属性，例如分子中的原子和化学键、轨道交通中的地铁站和轨道
 
@@ -16,7 +58,7 @@
    
    
 
-2. RoadMap
+2. GNN RoadMap<span name = "1.2"> </span>
 
    - 在一些关于图的数据集上，Unlabeled Node的数量要远大于Labeled Node，因此如何利用Labeled Node和图结构是GNN所关注的问题之一。
 
@@ -32,7 +74,7 @@
 
 
 
-#### 2.GNN可以解决的问题类型已经相关DataSet和BenchMark
+#### 2.GNN可以解决的问题类型以及相关DataSet和BenchMark<span name = "2"> </span>
 
 <img src="./image-20200612181228591.png" alt="image-20200612181228591" style="zoom: 50%;" />
 
@@ -40,9 +82,9 @@
 
 
 
-#### 3.Spatial-based GNN（包括NN4G、DCNN、DGC、MoNET、GraphSage、GAT、GIN）
+#### 3.Spatial-based GNN<span name = "3"> </span>
 
-1. Review
+1. CNN Review<span name = "3.1"> </span>
 
    - 在CNN中，通过Feature Map和Kernel进行卷积操作提取小范围的结构特征
 
@@ -58,7 +100,7 @@
 
      
 
-2. NN4G（Neural Network for Graph）
+2. NN4G（Neural Network for Graph）<span name = "3.2"> </span>
 
    - Aggregate - 以化学分子为例，下图中的节点v表示原子，边表示化学键。在Input Layer中$x_i$表示第i个节点的feature，即该原子的各类化学性质；在Hidden Layer中，$h_i^j$表示第i个隐层第j个节点的feature。
 
@@ -78,7 +120,7 @@
 
      
 
-3. DCNN（Diffusion Convolution Neural Network）
+3. DCNN（Diffusion Convolution Neural Network）<span name = "3.3"> </span>
 
    - Aggregate - 将邻居节点的距离作为一项考虑因素
      
@@ -92,7 +134,7 @@
 
    
 
-4. DGC（Diffusion Graph Convolution）
+4. DGC（Diffusion Graph Convolution）<span name = "3.4"> </span>
 
    - Aggregate - 与DCNN相似
 
@@ -100,7 +142,7 @@
 
       <img src="./image-20200622113431214.png" alt="image-20200622113431214" style="zoom: 25%;" />
 
-5. MoNET（Mixture Model Networks)
+5. MoNET（Mixture Model Networks）<span name = "3.5"> </span>
 
    - 定义了一种新的权重用来代表节点之间的距离：$u(x,y)=(\frac{1}{\sqrt{deg(x)}},\frac{1}{\sqrt{deg(y)}})^T$
 
@@ -108,7 +150,7 @@
 
      <img src="./image-20200622115106542.png" alt="image-20200622115106542" style="zoom: 50%;" />
 
-6. GraphSage（SAmple and aggreGatE）
+6. GraphSage（SAmple and aggreGatE）<span name = "3.6"> </span>
 
    - GraphSage可以进行transductive和inductive学习
 
@@ -116,7 +158,7 @@
 
      <img src="./image-20200622141621782.png" alt="image-20200622141621782" style="zoom:67%;" />
 
-7. GAT（Graph AttentinNeiworks）
+7. GAT（Graph AttentinNeiworks）<span name = "3.7"> </span>
 
    - 对于邻居节点不但要使用weighted sum，而且不同邻居的weight不是通过预先设定的，而是通过网络学习出来的
 
@@ -124,7 +166,7 @@
 
      
 
-8. GIN（Graph Isomorphism Network）
+8. GIN（Graph Isomorphism Network）<span name = "3.8"> </span>
 
    - 通过理论证明得出，对于某一个节点$v$在第$k$个隐层的表示可以用如下公式进行更新，即“上一个隐层的表示” + “邻居全部加和”
    
@@ -136,9 +178,9 @@
 
 
 
-#### 4.Graph Signal Processing（信号系统中的数学变换与GNN的关系） and Spectral-based GNN（谱图理论、ChabNet、GCN）
+#### 4.Graph Signal Processing and Spectral-based GNN<span name = "4"> </span>
 
-1. Signal and System Review
+1. Signal and System Review（信号系统中的数学变换与GNN的关系）<span name = "4.1"> </span>
 
    - 在CNN中，因为Image是规则的矩阵排列，所以可以与Kernel进行卷积操作提取特征，在Graph中为了近似这种操作，Spectral-based GNN的做法就是，将input看做信号，对signal和filter进行Fourier Transform，在原有的feature domain中做的卷积操作因为经过傅里叶变换，在新的feature domain中直接进行相乘即可，最后再进行Inverse Fourier Transform
 
@@ -158,7 +200,7 @@
 
      <img src="./image-20200623171209880.png" style="zoom:50%;" />
 
-2. Spectral Graph Theory
+2. Spectral Graph Theory（谱图理论）<span name = "4.2"> </span>
 
    - 已知图$G$、节点集合$N$、邻接矩阵(权重矩阵)$A$、度矩阵$D$、节点的信号量$f(i)$。假设在路网图中，节点表示城市，$f(i)$表示城市的规模/人口/迁移量等等
 
@@ -236,7 +278,7 @@
 
      <img src="./image-20200623210952723.png"/>
 
-3. ChebNet
+3. ChebNet<span name = "4.3"> </span>
 
    - 通过使$g_\theta(L)$为$L$的多项式以解决$O(N)$复杂度和Localize的问题，即$g_\theta(L)=\sum\limits_ {k=0} ^K \theta_kL^K$，实现了K-Localize和$O(K)$，需要学的就变成了$\theta_k$。但是在最终计算$y$的过程中乘以特征向量使得时间复杂度变为$O(N^2)$
 
@@ -258,7 +300,7 @@
 
      
 
-4. GCN（Graph Convolution Network）
+4. GCN（Graph Convolution Network）<span name = "4.4"> </span>
 
    - 在ChebNet的基础上，令$K=1$，则有：
 
@@ -272,7 +314,7 @@
 
      
 
-#### 5.Graph Generation（VAE-based model、GAN-based model、Auto-regressive-based model概述）
+#### 5.Graph Generation（VAE-based model、GAN-based model、Auto-regressive-based model概述）<span name = "5"> </span>
 
 1. VAE-based model：Generate a whole graph in one step
 
@@ -292,7 +334,7 @@
    
    
 
-#### 6.GNN for NLP（概述）
+#### 6.GNN for NLP（概述）<span name = "6"> </span>
 
 1. Semantic Roles Labeling
 2. Event Detection
@@ -301,7 +343,7 @@
 5. Relation Extraction
 6. Knowledge Graph
 
-#### 7.Summary
+#### 7.Summary<span name = "7"> </span>
 
 1. GAT and GCN are the most popular GNNs
 2. Although GCN is mathematically driven, we tend to ignore its math
