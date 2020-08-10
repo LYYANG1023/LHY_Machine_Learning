@@ -8,7 +8,7 @@
 
 ### 课程大纲图
 
-![HW](./OutLine.png)
+<img src="./OutLine.png" alt="Outline" />
 
 摘自李宏毅老师课程网站：http://speech.ee.ntu.edu.tw/~tlkagk/courses_ML20.html
 
