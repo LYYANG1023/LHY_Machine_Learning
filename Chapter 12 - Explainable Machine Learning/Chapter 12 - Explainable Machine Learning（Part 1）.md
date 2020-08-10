@@ -75,9 +75,13 @@
 
      <img src="./image-20200721135717496.png" alt="image-20200721135717496" style="zoom: 33%;" />
 
+     
+
    - 对于输入$\{x_1,···，x_n,···,x_N\}$，经过模型后会得到该输入属于每一个类别的概率，其中最大的概率$y_k$就是代表着其所属的类别。因此可以给输入增加一个小的变化量$\{x_1,···，x_n+\triangle x,···,x_N\}$，观察输出概率的变化量$y_k+\triangle y$，那么$|\frac{\triangle y}{\triangle x}|$越大表示component $x$越重要，$|\frac{\triangle y}{\triangle x}|$等价于$|\frac{\partial y_k}{\partial x_n}|$，可以根据$|\frac{\partial y_k}{\partial x_n}|$画出Slaiency Map（下图中的灰色图像，亮度越高表示$|\frac{\partial y_k}{\partial x_n}|$越大，越亮表示越重要）（Karen Simonyan, Andrea Vedaldi, Andrew Zisserman, “Deep Inside Convolutional Networks: Visualising Image Classification Models and Saliency Maps”, ICLR, 2014）
 
      <img src="./image-20200721140928364.png" alt="image-20200721140928364" style="zoom:50%;" />
+
+     
 
    - 其他相关文献如下：
 
@@ -199,4 +203,5 @@
      <img src="./image-20200721183517142.png" alt="image-20200721183517142" style="zoom:50%;" />
 
    - Tree Regularization：在训练神经网络时，就考虑到后续需要使用Decision Tree去解释这个黑盒模型，即模型的参数易于被Decision Tree分析。所以在黑盒模型的损失函数中加入一个正则项$\theta^*=arg \ \max \limits _{\theta}L(\theta)+\lambda O(T_\theta)$，通过正则的方式约束对应的Decision Tree的复杂度。但是因为$O(T_\theta)$是不可以微分的，所以目前该损失函数不可以通过梯度下降求解。模型的提出者又训练了一个神经网络，该网络可以根据一个神经网络的相关参数预测出其对应的Decision Tree的复杂度。（[https://arxiv.](https://arxiv.org/pdf/1711.06178.pdf)[org](https://arxiv.org/pdf/1711.06178.pdf)[/pdf/1711.06178.pdf](https://arxiv.org/pdf/1711.06178.pdf)）
-
+   
+     

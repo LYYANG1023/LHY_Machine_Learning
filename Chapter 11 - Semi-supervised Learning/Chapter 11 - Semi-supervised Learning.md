@@ -192,7 +192,7 @@
 
      - 将所有的样本点都构建在一张图中，形成一个Graph Representation。有些时候，Graph Representation是一件很自然的事情，例如网页或者论文之间的链接引用关系，就是天然的图结构。
 
-     - Graph Construction：①定义$x^i$和$x^j$之间的相似度$s(x^i,x^j)$，常用方法为Gaussian Radial Basis Function $s(x^i,x^j )=exp(-\gamma‖x^i-x^j ‖^2 )$。RBF相似度通过取对数的方式增加了相似度对于两点距离的敏感性，即当二者很近时$s(x^i,x^j)$很大，二者距离稍远时$s(x^i,x^j)$会迅速下降变成一个很小的值。因此RBF similarity可以构造一个很近的点连在一起，稍远的点无边相连的图；②通过K Nearest Neighbor或者e-Neighborhood的方法构建边；③根据$s(x^i,x^j)$对边赋予权重
+     - Graph Construction：①定义$x^i$和$x^j$之间的相似度$s(x^i,x^j)$，常用方法为Gaussian Radial Basis Function $s(x^i,x^j )=exp(-\gamma‖x^i-x^j ‖_2 )$。RBF相似度通过取对数的方式增加了相似度对于两点距离的敏感性，即当二者很近时$s(x^i,x^j)$很大，二者距离稍远时$s(x^i,x^j)$会迅速下降变成一个很小的值。因此RBF similarity可以构造一个很近的点连在一起，稍远的点无边相连的图；②通过K Nearest Neighbor或者e-Neighborhood的方法构建边；③根据$s(x^i,x^j)$对边赋予权重
 
      - 算法思想（定性）：
 
@@ -206,11 +206,11 @@
 
        ​		<img src="./image-20200720172353375.png" alt="image-20200720172353375" style="zoom:50%;" />
 
-     - 上述平滑度的定义$S=\frac{1}{2} \sum\limits_{i,j}w_{i,j} (y^i-y^j )^2$可以整理为$S=\frac{1}{2} \sum\limits_{i,j}w_{i,j} (y^i-y^j )^2=y^TLy$。其中$y=[⋯y^i⋯y^j⋯]^T$，为$(R+U)$维的向量；$L=D-W$，$L$称为Graph Laplacian，是一个$(R+U)\times(R+U)$维度的矩阵；$W$为图中边的权重矩阵，$D$为$W$矩阵加和运算的转换
+     - 上述平滑度的定义$S=\frac{1}{2} \sum\limits_{i,j}w_{i,j} (y^i-y^j )^2$可以整理为$S=\frac{1}{2} \sum\limits_{i,j}w_{i,j} (y^i-y^j )^2=y^TLy$。其中$y=[⋯y^i⋯y^j⋯]^T$，为$(R+U)$维的向量；$L=D-W$，$L$称为Graph Laplacian，是一个$(R+U)\times(R+U)$维度的矩阵；$W$为图中边的权重矩阵，$D$为$W$矩阵列加和运算的转换
 
        <img src="./image-20200720173621286.png" alt="image-20200720173621286" style="zoom:50%;" />
 
-     - 可以根据$S=y^TLy$来衡量目前得到的Label有多Smoothness，$y$值取决于神经网络的参数。因此可以对损失函数进行调整，$L=\sum \limits_{x^r}C(y^r,y ̂^r )+\lambda S$，将$S$作为一个正则项加入损失函数，不但要求模型准确，而且要求生成的Label尽可能的平滑
+     - 可以根据$S=y^TLy$来衡量目前得到的Label有多Smoothness，$y$值取决于神经网络的参数。因此可以对损失函数进行调整，$L=\sum \limits_{x^r}C(y^r,\hat{y}^r )+\lambda S$，将$S$作为一个正则项加入损失函数，不但要求模型准确，而且要求生成的Label尽可能的平滑
 
      - 不但可以对神经网络的输出层有Smoothness的要求，还可以对隐层增加Smoothness的要求（J. Weston, F. Ratle, and R. Collobert, “Deep learning via semi-supervised embedding,” ICML, 2008）
 

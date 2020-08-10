@@ -1,198 +1,203 @@
-# Chapter 13 - Attck and Defense（Part 1）
+# Chapter 14 - Network Compression（Part 1）
 
 [Abstract](#Abstract)
 
-[1.Introduction](#1)
+[1.Network Purning](#1)
 
-​		[1.1 Attack Model基本原理](#1.1)
+​		[1.1 神经网络修剪的基本原理](#1.1)
 
-​		[1.2 如何求解Attack Model](#1.2)
+​		[1.2 Network Pruning - Practical Issue](#1.2)
 
-​		[1.3 Example](#1.3)
+[2.Knowledge Distillation（知识蒸馏）](#2)
 
-[2.Attack Approaches](#2)
+​		[2.1 Knowledge Distillation基本原理](#2.1)
 
-​		[2.1 Related References](#2.1)
+​		[2.2 训练技巧](#2.2)
 
-​		[2.2 Fast Gradient Sign Method (FGSM)](#2.2)
+[3.Parameter Quantization](#3)
 
-​		[2.3 White Box v.s. Black Box](#2.3)
+​		[3.1 Parameter Quantization的三种解决方案](#3.1)
 
-​		[2.4 Universal Adversarial Attack](#2.4)
+​		[3.2 Binary Connect Network](#3.2)
 
-​		[2.5 Adversarial Reprogramming](#2.5)
+[4.Architecture Design](#3.2)
 
-​		[2.6 Audio Attack & Text Attack](#2.6)
+​	[4.1 隐层的增加与参数的减少](#4.1)
 
-[3.Defense](#3)
+​	[4.2 Depthwise Separable Convolution](#4.2)
 
-​		[3.1 Passive Defense](#3.1)
+​	[4.3 More Related Paper](#4.3)
 
-​		[3.2 Proactive Defense](#3.2)
+[5.Dynamic Computation](#5)
 
-
-
-#### <span name="Abstract">Abstract：机器学习虽然有很强的能力，但是也需要考虑恶意攻击的可能性，提高模型的鲁棒性。俗话说，“知彼知己，百战不殆”，首先需要了解怎么攻击一个机器学习模型，然后才能研究如何防范</span>
+​	[5.1 计算资源与计算目标的动态调整](#5.1)
 
 
 
-#### <span name="1">1.Attack Model</span>
+#### <span name="Abstract">Abstract：由于一些智能家居或移动设备的资源有限性，比如有限的存储空间、有限的计算能力等等，这些设备上搭载的神经网络不能够太大太复杂，否则设备可能会过载运转。因此需要研究网络压缩技术降低神经网络的规模。</span>
 
-1. <span name="1.1">Attack Model基本原理</span>
 
-   - 假设有一个图片识别系统。给定一张图片，网络识别出是Tiger Cat的概率是0.64。在原始图片$\begin{pmatrix} x_1 \\ x_2 \\ x_3 \\ x_4 \end{pmatrix}$的基础上，增加一个特殊的噪声$x'=\begin{pmatrix} \Delta x_1 \\ \Delta x_2 \\ \Delta x_3 \\ \Delta x_4 \end{pmatrix}$，得到与原始输入似的Attacked Image  $x'=x^0+\Delta x$。将Attacked Image作为输入会得到截然不同的答案。
 
-      <img src="/Users/liuyuyang/GitHubLocalRepositories/LHY_Machine_Learning/Chapter 13 - Attack and Defense/image-20200723194140684.png" alt="image-20200723194140684" style="zoom:33%;" />
+#### <span name="1">1.Network Purning</span>
 
-   - 对于正常的NN Model，$x^0$经过模型$f_\theta$得到输出$y^0=f_\theta（x）$，模型的目标是最小化$y^0$和$y^{true}$之间的差异，即损失函数为：$L_{train} (θ)=C(y^0,y^{true})$。训练过程输入是固定的，调整的是模型的参数$\theta$。对于这种模型的攻击，分为Non-targeted Attack和Targeted Attack。
+1. <span name="1.1">神经网络修剪的基本原理</span>
 
-      - Non-targeted Attack指给输入加上一个噪声$x'$后，让输出与$y^{true}$的差异尽可能的大，损失函数可以表示为$L(x^′)=-C(y^′,y^{true})$，即与模型的损失函数恰好相反。攻击模型的训练方法是，网络的参数已知并固定，调整输入。
+   - Network Purning可行的原理是神经网络通常是over-parameterized，许多的链接权重和神经元都是冗余的，所以有效地进行修剪并不会有影响网络的功能。
 
-      - Targeted Attack指给输入加上一个噪声$x'$后，让输出与$y^{true}$的差异尽可能的大，同时与$y^{false}$尽可能接近，$y^{false}$是攻击者预先设计好的错误结果，损失函数可以表示为$L(x^′ )=-C(y^′,y^{true})+C(y^′,y^{false} )$，即与模型的损失函数恰好相反。攻击模型的训练方法是，网络的参数已知并固定，调整输入。
+   - Network Purning的一般步骤为：
 
-      - 再进行上述两者的攻击时，都需要加入一个约束$d(x^0,x')\le \varepsilon$，表示恶意输入和正常输入的差距足够的小，才能保证不被发现。
+      - 具备一个Large Pre-trained Network；
 
-         <img src="/Users/liuyuyang/GitHubLocalRepositories/LHY_Machine_Learning/Chapter 13 - Attack and Defense/image-20200723195609753.png" alt="image-20200723195609753" style="zoom:50%;" />
+      - 评价权重的重要性（观察数值的大小，越接近0越不重要。或L1、L2范式）；
 
-   - 关于$x^0$和$x'$的差异 $d(x^0,x')$有两种定义方式，L2-Norm和L-Infinity。已知$\Delta x=x'-x^0$，展开表示为$\begin{pmatrix} \Delta x_1 \\ \Delta x_2 \\ \Delta x_3 \\ \Delta x_4 \end{pmatrix}=\begin{pmatrix} x_1' \\ x_2' \\ x_3' \\ x_4'\end{pmatrix}-\begin{pmatrix} x_1 \\ x_2 \\ x_3 \\ x_4 \end{pmatrix}$。
+      - 评价Neuron的重要性（观察神经元的输出分布，频繁输出接近0的值代表越不重要）；
 
-      - L2-Norm指$d(x^0,x')=||x^0-x'||_2=(\Delta x_1)^2+(\Delta x_2)^2+(\Delta x_3)^2+···$
+      - 移除不需要的链接和神经元，得到一个比较小的网络；
 
-      - L-Infinity指$d(x^0,x')=||x^0-x'||_\infty=max\{\Delta x_1,\Delta x_2,\Delta x_3,···\}$
+      - 移除后，网络的准确性可能会稍稍的下降，因为移除的大多是没有用的链接和神经元
 
-      - 假设一个图片有4个pixel，共有12个数值。一种方式是对每个pixel做小小的改动，另一种是只对其中一个pixel做稍大的改动。两种改动的L2-Norm值是相同的，但是后者的L-Infinity值更大。此时L2-Norm已经无法描述肉眼可以观察出的差异，所以一般在影响攻击时会使用L-Infinity
+      - 为了弥补准确性，在数据集上重新训练一次，进行Fine-tune
 
-         <img src="/Users/liuyuyang/GitHubLocalRepositories/LHY_Machine_Learning/Chapter 13 - Attack and Defense/image-20200723215539730.png" alt="image-20200723215539730" style="zoom:50%;" />
+      - 如果得到了满意的网络，就可以结束；通常一次不会删除过多的链接和神经元，因为删除过多的话没有办法通过Fine-tune进行恢复。所以此时可能网络的规模没有小到满意的程度，可以回到step 2重复进行即可
+
+         <img src="./image-20200724213513410.png" alt="image-20200724213513410" style="zoom:33%;" />
+
+   - 使用Network Purning，而不是直接研究如何训练一个小的神经网络的原因是：①小型的神经网络难以训练，大的神经网络容易做到最优化，不会被局部最优等问题困扰（https://www.youtube.com/watch?v=_VuWvQUMQVk ）；②Lottery Ticket Hypothesis（https://arxiv.org/abs/1803.03635）研究说明直接将修剪后神经网络结构重新随机初始化，无法训练出有效地模型。将大网络训练时随机初始化的权重（红线）直接拷贝过来，Sub-NN是可以有效训练的。这项研究提出的大乐透假设指出，对于一个小的神经网络，有的初始值是可以得出结果的，有的初始值是无法得出结果的。大的神经网络容易训练的原因是，其包含着很多小的神经网络，通过随机初始化权重，总能碰到一个可以成功训练的小网络。
+
+      <img src="./image-20200724221101201.png" alt="image-20200724221101201" style="zoom:33%;" />
+
+   - 在与Lottery Ticket Hypothesis同年的ICLR‘2019的会议上，其他学者提出小网络是可以训练的。（https://arxiv.org/abs/1810.05270）
 
       
 
-2. <span name="1.2">如何求解Attack Model</span>
+2. <span name="1.2">Network Pruning - Practical Issue </span>
 
-   - 在第一小节描述的攻击模型的最终目标可以描述为找到一个$x^*=arg \max \limits_{d(x^0,x')\le \varepsilon}L(x')$，寻找$x^*$的过程类似于训练神经网络的梯度下降过程。网络的训练是不断调整模型参数$\theta$最小化损失函数，此处是不断调整$x'$最小化损失函数，在梯度下降的同时使用$\varepsilon$对更新过程进行限制。
+   - Weight pruning会导致网络结构的不均衡，有的神经元有2个输入，有的神经元却有三个输入。这样的网络在代码实现上比困难，难以用CPU加速（无法进行矩阵运算）。一种解决方案将修剪掉的链接权重设为0，这样虽然可以进行矩阵运算，但实际上只是“鸵鸟策略”，网络的大小并没有改变。（https://arxiv.org/pdf/1608.03665.pdf）
 
-   - Attack Model的训练方法如下：
+      <img src="./image-20200724221959578.png" alt="image-20200724221959578" style="zoom: 33%;" />
 
-      <img src="/Users/liuyuyang/GitHubLocalRepositories/LHY_Machine_Learning/Chapter 13 - Attack and Defense/image-20200723230704146.png" alt="image-20200723230704146" style="zoom:33%;" />
+   - Neuron Purning是比较容易实现并使用GPU加速的。
 
-   - 函数$fix(x^t)$的功能是，假设$t$时刻更新至$x^t$，但$x^t$不满足$d(x^0,x')\le \varepsilon$限制，$fix(x^t)$会在$x^0$（金黄色点）周围$\varepsilon$的距离内进行穷举，寻找一个距离$x^t$最近的$x$（橙色点）来代替$x^t$（蓝色点）。其中L-Infinity的边界是正方形的原因是因为橙色点的横坐标和纵坐标与金黄色点的差值均等于$\varepsilon$，符合其定义。
-
-      <img src="/Users/liuyuyang/GitHubLocalRepositories/LHY_Machine_Learning/Chapter 13 - Attack and Defense/image-20200723233104487.png" alt="image-20200723233104487" style="zoom:33%;" />
+      <img src="./image-20200724222136106.png" alt="image-20200724222136106" style="zoom:33%;" />
 
    
 
-3. <span name="1.2">Example</span>
 
-   - 神经网络模型采用ResNet-50。给定一张图片，其标签为Tiger cat，希望攻击后给出的标签是Star fish。实验结果显示攻击前Tiger cat的概率是0.64，攻击后给出Star fish的概率是1.00
 
-     <img src="/Users/liuyuyang/GitHubLocalRepositories/LHY_Machine_Learning/Chapter 13 - Attack and Defense/image-20200723233736162.png" alt="image-20200723233736162" style="zoom: 25%;" />
+#### <span name="2">2.Knowledge Distillation（知识蒸馏）</span>
 
-   - 将两张图片相减放大50倍，可以得到两张图片的结果
+1. <span name="2.1">Knowledge Distillation基本原理</span>
 
-     <img src="/Users/liuyuyang/GitHubLocalRepositories/LHY_Machine_Learning/Chapter 13 - Attack and Defense/image-20200723233929927.png" alt="image-20200723233929927" style="zoom: 25%;" />
+   - 先训练一个Large Neural Network，大的神经网络也不一定会百分之百的正确。然后在训练一个Small Neural Network去模仿Large Neural Network的行为，如Large Neural Network得出的预测结果是“1”: 0.7, “7”: 0.2. “9”: 0.1。那么就是用交叉熵最小化的方式去让Small Neural Network产生同样的输出。（https://arxiv.org/pdf/1503.02531.pdf；Do Deep Nets Really Need to be Deep? ；https://arxiv.org/pdf/1312.6184.pdf）
 
-   - 攻击模型时，对原始图片增加的噪声是经过梯度下降计算出来的。如果随意的增加噪声，并不能有效地对模型攻击。如下图所示，随机的增加噪声，只要到噪声达到一定程度时，才会扰乱机器的判断
+     <img src="./image-20200727111106987.png" alt="image-20200727111106987" style="zoom:33%;" />
 
-     <img src="/Users/liuyuyang/GitHubLocalRepositories/LHY_Machine_Learning/Chapter 13 - Attack and Defense/image-20200723234331226.png" alt="image-20200723234331226" style="zoom: 25%;" />
+   - Student Network模仿Teacher Network的可行性来源于，Teacher Network能够提供比data和label更丰富的信息。如上图所示，Teacher Network不但会知道当前输入是“1”的可能性最大，还会知道"1"、"7"、"9"之间具有一定的相似性。Knowledge Distillation的提出论文中指出，在Student Network的训练过程中，即便数据集中剔除所有与“7”相关的数据，但是训练完成后其仍然可以辨识出数字“7”，该过程就是从Teacher Network中学习到的。
 
-   - 假设原始图片$x^0$是某个高维空间中的一个点，红色线表示判断为Tiger cat的信心值，蓝色线表示判断为Egyptian cat的信心值，绿色线表示判断为Persian cat的信心值。如果将这个点随机的小范围移动，将其判断为Tiger cat的信心值始终会维持一个较高的水平。但是在高维空间中，存在一些特殊的方向（右图），只要沿着这个特殊的方向移动一点点，将其判断为Tiger cat的信心值会快速下降，将其判断为其他无关实物的信心值会快速上升。
+   - Knowledge Distillation的应用场景为：参加机器学习竞赛的常用手段是Ensembel技术，虽然该技术在比赛中可以略微的提高正确率。但是在实际应用中，不可能在设备上同时跑成百个模型，然后去Ensemble。此时，可以对训练处的各类模型做知识蒸馏，让Small Neural Network去学习Ensemble的过程。
 
-     <img src="/Users/liuyuyang/GitHubLocalRepositories/LHY_Machine_Learning/Chapter 13 - Attack and Defense/image-20200723235032848.png" alt="image-20200723235032848" style="zoom:33%;" />
+   - 知识蒸馏在实践过程中的使用价值还有待验证，LHY老师的课题组初步使用知识蒸馏并没有得到很好的结果
 
      
 
+2. <span name="2.2">训练技巧</span>
 
-#### <span name="2">2.Attack Approaches</span>
+   - 在最后的输出层，需要对输出做Softmax。假设$x_i$表示最后一层的输出，$y_i$表示Softmax后的值。通常的Softmax指的是$y_i=\frac{exp(x_i)}{\sum_j exp(x_j)}$，此时为了让Teacher Network的输出保留更多的信息，而不是尽可能的与标签相似，需要在Softmax中加入“Temperature”的概念，即$y_i=\frac{exp(x_i/T)}{\sum_j exp(x_j/T)}$
 
-1. <span name="2.1">Related References</span>
-
-   - 虽然各种攻击方法层出不穷，但其实质就是使用不同的constrain进行距离约束和使用不同的最优化算法求解。以下列出了一些典型案例：
-
-     <img src="/Users/liuyuyang/GitHubLocalRepositories/LHY_Machine_Learning/Chapter 13 - Attack and Defense/image-20200724103716773.png" alt="image-20200724103716773" style="zoom: 33%;" />
-
-     
-
-     - FGSM (https://arxiv.org/abs/1412.6572)
-     - Basic iterative method (https://arxiv.org/abs/1607.02533)
-     - L-BFGS (https://arxiv.org/abs/1312.6199)
-     - Deepfool (https://arxiv.org/abs/1511.04599)
-     - JSMA (https://arxiv.org/abs/1511.07528)
-     - C&W (https://arxiv.org/abs/1608.04644)
-     - Elastic net attack (https://arxiv.org/abs/1709.04114)
-     - Spatially Transformed (https://arxiv.org/abs/1801.02612)
-     - One Pixel Attack (https://arxiv.org/abs/1710.08864)
-
-     
-
-2. <span name="2.2">Fast Gradient Sign Method (FGSM)</span>
-
-   - FGSM虽然不是最强大的方法，但是确实一种比较简单的方法。思路为求解损失函数对于每个维度输入的偏微分，作为符号函数的输入，$\Delta x=\begin{pmatrix} sign(\partial L/ \partial x_1) \\ sign(\partial L/ \partial x_2) \\ sign(\partial L/ \partial x_3) \\ ·  \\ · \end{pmatrix}$。即如果某个维度的微分为正，则为1；反之则为-1。寻找最优解$x^*$的方法是$x^* \leftarrow x^0 - \varepsilon\Delta x$，其实际含义为对初始输入的每一个维度增加或减少一个$\varepsilon$的量。
-
-   - 假设FGSM使用的是L-Infinity距离，在$x^0$处算出的梯度为蓝色箭头。如果使用梯度下降的方法求解，会将$x^0$更新到$x^1$处；如果使用FGSM的方法，会将$x^0$更新到$x^*$处。<font color="red">由此可以看出FGSM方法看中的不是梯度的大小，而是梯度的方向。相较于梯度下降，FGSM相当于设置了一个较大的learning rate。如果learning rate过大，导致结果落在了方形之外，也会根据约束将其拉回到顶角的位置</font>
-
-     <img src="/Users/liuyuyang/GitHubLocalRepositories/LHY_Machine_Learning/Chapter 13 - Attack and Defense/image-20200724104340957.png" alt="image-20200724104340957" style="zoom:50%;" />
-
-     
-
-     
-
-3. <span name="2.3">White Box v.s. Black Box</span>
-
-   - White Box：在已知神经网络的参数$\theta$时，固定参数$\theta$调整输入$x$的攻击方式称为White Box Attack
-
-   - Black Box：在不知道神经网络参数时进行的攻击。（https://arxiv.org/pdf/1611.02770.pdf）
-
-     - 如果我们可以获得目标神经网络的训练数据时，可以使用该数据集自行训练一个Network Proxy。在Network Proxy上训练white box attack，得到的攻击样本一般也可以对目标神经网路进行有效攻击
-     - 如果我们无法获得目标神经网络的训练数据时，可以利用神经网络的API接口，通过输入数据，获得输出，自行构建input-output pairs
-     
-     <img src="/Users/liuyuyang/GitHubLocalRepositories/LHY_Machine_Learning/Chapter 13 - Attack and Defense/image-20200724104938835.png" alt="image-20200724104938835" style="zoom:33%;" />
+     <img src="./image-20200727113339152.png" alt="image-20200727113339152" style="zoom: 33%;" />
      
      
 
-5. <span name="2.4">Universal Adversarial Attack</span>
 
-   - 上述章节的攻击方式都是针对于特定的输入求解出特定的噪声，将二者加和在一起进行攻击。有学者提出一种Universal Adversarial Attack的攻击方式，旨在寻找具有一定通用性的噪声进行攻击，具体参见论文https://arxiv.org/abs/1610.08401。
+#### <span name="3">3.Parameter Quantization</span>
+1. <span name="3.1">Parameter Quantization的三种解决方案</span>
 
-5. <span name="2.5">Adversarial Reprogramming </span>
+   - Parameter Quantization的两种解决方式是：①使用更少的bits去存储每一个变量；②Weight Clustering；③对于常出现的参数利用Huffman encoding等方式进行压缩
 
-  - 通过给输入增加噪声的方式，改变神经网络的现有功能，比如从动物识别转换到矩形识别（*Gamaleldin* *F.* Elsayed, Ian Goodfellow, Jascha Sohl-Dickstein, “*Adversarial Reprogramming of Neural Networks*”, ICLR, 2019）
+   - Weight Clustering指的是，利用聚簇手段对参数进行分类，在参数存储时，存储参数所属的类别和类别对应表即可。
 
-6. <span name="2.6">Audio Attack & Text Attack</span>
+     ![image-20200727155847107](./image-20200727155847107.png)
+     
+     
 
-  - https://nicholas.carlini.com/code/audio_adversarial_examples/
+2. <span name="3.2">Binary Connect Network</span>
 
-  - [https://adversarial-attacks.net](https://adversarial-attacks.net/)
+   - Binary Connect指的是只是用+1或-1标记网络的权重，即网络权重二值化。下图表示一个参数空间，每一个灰色的点都代表一组二值化的权重。Binary Connect Network的训练与普通神经网络的训练很相似，蓝色的点表示正常网络的梯度下降方向，Binary Connect Network每次都会选取距离蓝色点最近的灰色点进行参数的更新
 
-  - https://arxiv.org/pdf/1707.07328.pdf
+     <img src="./image-20200727160252687.png" alt="image-20200727160252687" style="zoom: 33%;" />
+   
+   - Binary Connect： https://arxiv.org/abs/1511.00363 
+   
+   - Binary Network：https://arxiv.org/abs/1602.02830
+   
+   - XNOR-net：https://arxiv.org/abs/1603.05279
+   
+   - Binary Connect的实验结果表明，一定程度上还要优于正常网络。原因是，Binary Weight相当于对网络增加了一下正则化的条件。（https://arxiv.org/abs/1511.00363）
+   
+     <img src="./image-20200727160847594.png" alt="image-20200727160847594" style="zoom:33%;" />
+   
+     
+   
 
-    
+#### <span name="4">4.Architecture Design</span>
 
-#### <span name="3">3.Defense</span>
-1. <span name="3.1">Passive Defense</span>
+1. <span name="4.1">隐层的增加与参数的减少</span>
 
-   - Passive Defense指的是在不改变神经网络模型的前提下，想办法去发现那些被恶意篡改的输入。如下图所示在神经网络前增加一个Filter，过滤输入图片中的噪声。Filter的常见方法为对图像的像素进行平滑化，可以降低一些恶意噪声的作用，同时不妨碍正常图片的识别。
+   - 对于Fully Connected Network，前一层有$N$个神经元，后一层有$M$个神经元，两层之间的权重为$W$，参数量为$N\times M$。通过结构重新设计的方法减少权重数量，会在两层之家增加$K$个Linear Hidden Neuron，参数量为$N\times K+K\times M$，如果保证$K$的值不要太大，则可以保证$(N+M)\times K<N\times M$。但是增加一个隐藏层会使得$U\times V$的秩小于$W$，即降低了模型Capacity
 
-     <img src="/Users/liuyuyang/GitHubLocalRepositories/LHY_Machine_Learning/Chapter 13 - Attack and Defense/image-20200724111327242.png" alt="image-20200724111327242" style="zoom:33%;" />
-
-     <img src="/Users/liuyuyang/GitHubLocalRepositories/LHY_Machine_Learning/Chapter 13 - Attack and Defense/image-20200724111458665.png" alt="image-20200724111458665" style="zoom:33%;" />
-
-   - 图中的squeezer就是Filter。Feature Squeeze的想法是将图像的原始输入，经过不同squeezer的输入都送入网络进行预测，对三种预测结果进行综合判断。（https://arxiv.org/abs/1704.01155）
-
-     ![image-20200724111737550](/Users/liuyuyang/GitHubLocalRepositories/LHY_Machine_Learning/Chapter 13 - Attack and Defense/image-20200724111737550.png)
-
-   - Randomization at Inference Phase指对输入进行随机的缩放、阴影重叠等，然后进行预测（https://arxiv.org/abs/1711.01991）
-
-     <img src="/Users/liuyuyang/GitHubLocalRepositories/LHY_Machine_Learning/Chapter 13 - Attack and Defense/image-20200724111911534.png" alt="image-20200724111911534" style="zoom: 50%;" />
-
-   - 假设Passive Defense的Filter的防御机制被泄露的话，那么Passive Defense同样是可以被攻击的。相当于可以把Filter看做神经网络的一层，就可以用传统的方法进行攻击
+     <img src="./image-20200727161757588.png" alt="image-20200727161757588" style="zoom:33%;" />
 
      
 
-2. <span name="3.2">Proactive Defense</span>
+2. <span name="4.2">Depthwise Separable Convolution</span>
 
-   - Proactive Defense的基本原理就是找出神经网络的漏洞，并进行补丁。通过在数据集中增加恶意输入的方式增强模型的鲁棒性
+   - Standard CNN Review：假设Input Feature Map为$6\times 6$的矩阵，有两个channels。共有四组Filter，每个Filter与输入对应也有两层。参数量为72。
 
-   - 基本算法如下：每一次内循环遍历一次恶意输入$\widetilde{x}^1，\widetilde{x}^2，···，\widetilde{x}^N$，一次内循环结束后可能弥补了一些漏洞，但是可能会引入新的漏洞，所以需要外循环$T$次。如果恶意输入$\widetilde{x}^1，\widetilde{x}^2，···，\widetilde{x}^N$是通过A方法生成的，那么该模型还是会被B方法进行攻击。所以目前Machine Learning Attack是比较被难防御的
+     <img src="./image-20200727162238512.png" alt="image-20200727162238512" style="zoom:33%;" />
 
-     ![image-20200724112316101](/Users/liuyuyang/GitHubLocalRepositories/LHY_Machine_Learning/Chapter 13 - Attack and Defense/image-20200724112316101.png)
+   - Depthwise Separable Convolution：将卷积操作拆分成两个操作。参数量为26。
+
+     - Depthwise Convolution：Filter的数量等于Input Channel的数量，每个Filter只关心一个channel。
+
+       <img src="./image-20200727164324945.png" alt="image-20200727164324945" style="zoom:33%;" />
+
+     - Pointwise Convolution：因为上一步不同的channel之间没有关联，所以此时使用$1\times 1$的两层Filter处理不同channel之间的关系。
+
+       <img src="./image-20200727164605271.png" alt="image-20200727164605271" style="zoom:33%;" />
+
+   - Standard CNN与Depthwise Separable Convolution对比：在Standard CNN中，相当于18个输入产生一个输出；Depthwise Separable Convolution的输出来自于中间产物，中间产物是由输入在不考虑channel时经过卷积得到的。相当于将18个输入拆解成2份，分别处理（参数共用达到减少参数量的目的）。处理完成后再综合起来得到输出。
+
+     <img src="./image-20200727164949736.png" alt="image-20200727164949736" style="zoom:33%;" />
+
+   - 参数量的理论计算：$I$表示Input Channel的数量，$O$表示输出channel的数量，$k\times k$表示卷积核的大小。两种参数量的比值为$\frac{1}{O}+\frac{1}{k\times k}$，即参数量缩小$k^2$倍
+
+     <img src="./image-20200727165613717.png" alt="image-20200727165613717" style="zoom:33%;" />
+
+     
+
+3. <span name="4.3">More Related Paper</span>
+
+   - SqueezeNet：https://arxiv.org/abs/1602.07360
+
+   - MobileNet：https://arxiv.org/abs/1704.04861
+
+   - ShuffleNet：https://arxiv.org/abs/1707.01083
+
+   - Xception：https://arxiv.org/abs/1610.02357
+
+     
+
+#### <span name="5">5.Dynamic Computation</span>
+
+1. <span name="4.1">计算资源与计算目标的动态调整</span>
+
+   - Dynamic Computation指根据计算资源的多少动态调整计算目标。如果计算资源充足，就算出最优的结果；如果计算资源匮乏，就降低计算标准，先求有再求好。
+
+   - 实现策略：
+
+     - 方案一为提前训练出各种计算能力的神经网络，根据实际情况选择相应的网络。该方案由于要存储大量的神经网络，不具有实践性。
+     - 方案二为训练一个可以根据Hidden Layer的结果进行分类的神经网络。该方案的缺点在于，神经网络的前几层抽取的都是比较简单的Pattern，根据这些信息进行分类，效果可能不是很好。如下图所示，越深层的隐层输出会得到更好的结果。除此之外，研究发现在隐层增加Classifier会影响整个网络的性能。以CNN为例，正常的CNN前几层学习到的是比较简单的信息，但是在前几层加Classifier会要求前几层就学习更多的信息，这违背了CNN架构的初衷。
+
+     <img src="./image-20200727170321814.png" alt="image-20200727170321814" style="zoom:33%;" />
 
      
