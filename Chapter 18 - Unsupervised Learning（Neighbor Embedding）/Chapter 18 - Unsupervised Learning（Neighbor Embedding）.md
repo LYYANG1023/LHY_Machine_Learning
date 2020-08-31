@@ -10,7 +10,7 @@
 
 ​		[2.1 Laplacian Eigenmaps的基本原理](#2.1)
 
-[3.3.T-distributed Stochastic Neighbor Embedding（t-SNE）](#3)
+[3.T-distributed Stochastic Neighbor Embedding（t-SNE）](#3)
 
 ​		[3.1 t-SNE的基本原理](#3.1)
 
