@@ -971,3 +971,47 @@
 ​		[4.Q-Learning for Continuous Actions](#4)
 
 ​				[4.1 Q-Learning处理连续型Action的难点和解决办法](#4.1)
+
+##### Chapter 26 - Deep Reinforence Learning（Part 4 - Asynchronous Advantage Actor-Critic（A3C））
+
+​		[1.RL中存在的问题与A3C的提出](#1)
+
+​				[1.1 使用长期收益期望解决即时收益的不稳定问题](#1.1)
+
+​				[1.2 Asynchronous Advantage Actor-Critic（A3C）](#1.2)
+
+​		[2.Pathwise Derivative Policy Gradient](#2)
+
+​				[2.1 借鉴GAN的思想使用Actor解决Q-Learning的arg max问题](#2.1)
+
+​				[2.2 Pathwise Derivative Policy Gradient算法伪代码](#2.2)
+
+##### Chapter 26 - Deep Reinforence Learning（Part 5 - Sparse Reward）
+
+​		[1.Reward Shaping](#1)
+
+​				[1.1 Reward Shaping的定义](#1.1)
+
+​				[1.2 Curiosity Reward](#1.2)
+
+​		[2.Curriculum Learning](#2)
+
+​				[2.1 Curriculum Learning的从易到难](#2.1)
+
+​				[2.2 Reverse Curriculum Generation](#2.2)
+
+​		[3.Hierarchical Reinforcement Learning](#3)
+
+​				[3.1 Curriculum Learning的从易到难](#3.1)
+
+##### Chapter 26 - Deep Reinforence Learning（Part 6 - Imitation Learning）
+
+​		[1.Behavior Cloning](#1)
+
+​				[1.1 Behavior Cloning的定义](#1.1)
+
+​				[1.2 Behavior Cloning中存在的一些问题](#1.2)
+
+​		[2.Inverse Reinforcement Learning （IRL）](#2)
+
+​				[2.1 IRL的基本过程](#2.1)
